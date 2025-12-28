@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-
 export const config = {
   runtime: 'edge',
 };
