@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Waiting Room</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">// The_Waiting_Room</div>
+        <nav>
+            <a href="index.html" class="active">Prompts</a>
+            <a href="gallery.html">Gallery</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="prompt-interface">
+            <div id="monitor">
+                <div class="monitor-screen">
+                    <div id="screen-content">
+                        <!-- MODIFIED: Added a span inside the p tag -->
+                        <p id="prompt-text" data-text="Awaiting Input..."><span class="typed-text">Awaiting Input...</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="prompt-actions" class="hidden">
+                <button id="put-back-btn" title="Return prompt to the mix">Abort</button>
+                <button id="upload-btn" title="Upload your sketch for this prompt">Log_Sketch</button>
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+            </div>
+        </div>
+        
+        <button id="get-prompt-btn">INITIATE_PROMPT</button>
+    </main>
+
+    <div id="notes-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Add Details to Log</h2>
+            <label for="sketch-date">Date:</label>
+            <input type="date" id="sketch-date">
+            <label for="sketch-notes">Notes:</label>
+            <textarea id="sketch-notes" rows="4" placeholder="Thoughts on this piece..."></textarea>
+            <button id="save-log-btn">Save to Gallery</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
