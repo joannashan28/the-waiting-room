@@ -7,18 +7,26 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener('DOMContentLoaded', () => {
     function showToast(message, isError = false) {
-        const container = document.getElementById('toast-container');
+        let container = document.getElementById('toast-container');
+        
+        // Create container if it doesn't exist yet
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
+
         const toast = document.createElement('div');
         toast.className = `toast ${isError ? 'error' : ''}`;
         toast.textContent = message;
         
         container.appendChild(toast);
 
-        // Auto-remove after 3 seconds
+        // Fade out and remove after 2.5 seconds
         setTimeout(() => {
             toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 500);
-        }, 3000);
+            setTimeout(() => toast.remove(), 400);
+        }, 2500);
     }
 
     const getPromptBtn = document.getElementById('get-prompt-btn');
@@ -204,11 +212,12 @@ document.addEventListener('DOMContentLoaded', () => {
             fileInput.value = '';
         }
 
+        
         async function handleSaveLog() {
             if (!currentPrompt || !tempFile) return;
 
             saveLogBtn.disabled = true;
-            saveLogBtn.textContent = 'Uploading...';
+            saveLogBtn.textContent = 'UPLOADING...';
 
             const formData = new FormData();
             formData.append('file', tempFile);
@@ -227,19 +236,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(errorData.error || 'Upload failed.');
                 }
                 
-                alert('LOG SUCCESSFUL. DATA ARCHIVED.');
-                notesModal.classList.add('hidden');
+                showToast('LOG SUCCESSFUL');
+                notesModal.classList.add('hidden'); // Only hide on success
                 resetScreen();
 
             } catch (error) {
                 console.error('Error uploading sketch:', error);
-                alert(`Error: ${error.message}`);
-            } finally {
+                showToast('UPLOAD FAILED - TRY AGAIN', true);
+                
+                // RE-ENABLE controls so the user can fix the issue
                 saveLogBtn.disabled = false;
-                saveLogBtn.textContent = 'Save to Gallery';
+                saveLogBtn.textContent = 'RETRY UPLOAD';
+                
+                // Note: The modal stays open, and the user can click outside 
+                // or click 'LOG_SKETCH' again to replace tempFile
             }
         }
 
+        const cancelLogBtn = document.getElementById('cancel-log-btn');
+
+        cancelLogBtn.addEventListener('click', () => {
+            notesModal.classList.add('hidden');
+            tempFile = null; // Clear the failed file
+            saveLogBtn.disabled = false;
+            saveLogBtn.textContent = 'Save to Logbook';
+        });
+        
         getPromptBtn.addEventListener('click', handleGetPrompt);
         putBackBtn.addEventListener('click', resetScreen);
         uploadBtn.addEventListener('click', () => fileInput.click());
@@ -304,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .eq('id', id);
 
             if (dbError) {
-                alert('Error deleting log from database.');
+                showToast('Error deleting log from database.');
                 return;
             }
 
@@ -314,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .remove([imagePath]);
             
             if (storageError) {
-                alert('Warning: Log deleted from database, but could not remove image file from storage.');
+                showToast('Warning: Log deleted from database, but could not remove image file from storage.');
             }
 
             renderGallery();

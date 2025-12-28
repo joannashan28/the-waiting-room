@@ -126,42 +126,83 @@ button:hover { color: var(--primary-glow); border-color: var(--primary-glow); bo
 
 #toast-container {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%); /* Centers the notification at the bottom */
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    pointer-events: none; /* Prevents blocking clicks on other elements */
 }
 
 .toast {
-    background: rgba(0, 0, 0, 0.9);
-    color: #00ff00; /* Neon green terminal style */
-    border-left: 4px solid #00ff00;
-    padding: 12px 20px;
+    background: rgba(15, 15, 15, 0.95);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 24px;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
-    animation: slideIn 0.3s ease-out forwards;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 200px;
 }
 
+/* Success style: A subtle white prefix */
+.toast::before {
+    content: "// ";
+    opacity: 0.5;
+    margin-right: 8px;
+}
+
+/* Error style: Red tint */
 .toast.error {
-    color: #ff3333;
-    border-left-color: #ff3333;
-    box-shadow: 0 0 15px rgba(255, 51, 51, 0.2);
+    border-color: #ff4444;
+    color: #ff4444;
 }
 
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.toast.error::before {
+    content: "!! ";
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.toast {
+    animation: fadeInUp 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 .toast.fade-out {
-    animation: fadeOut 0.5s ease-in forwards;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
-@keyframes fadeOut {
-    to { opacity: 0; transform: translateY(10px); }
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.secondary-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    font-family: inherit;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    padding: 10px;
+}
+
+.secondary-btn:hover {
+    border-color: #ffffff;
+    color: #ffffff;
 }
