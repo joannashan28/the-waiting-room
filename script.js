@@ -2,92 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = 'https://tpvbgmqzutnlcuxkateu.supabase.co'; 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdmJnbXF6dXRubGN1eGthdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NjAyNDcsImV4cCI6MjA4MjUzNjI0N30.9rOhszt9XxEXn2HCOEFPlPd_nnNxwAYXNzW9wwR8nyM';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-document.addEventListener('DOMContentLoaded', () => {
-    function showToast(message, isError = false) {
-        let container = document.getElementById('toast-container');
-        
-        // Create container if it doesn't exist yet
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            document.body.appendChild(container);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = `toast ${isError ? 'error' : ''}`;
-        toast.textContent = message;
-        
-        container.appendChild(toast);
-
-        // Fade out and remove after 2.5 seconds
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 400);
-        }, 2500);
-    }
-
-    const getPromptBtn = document.getElementById('get-prompt-btn');
-
-    if (getPromptBtn) {
-        // PROMPT PAGE LOGIC
-        const promptText = document.getElementById('prompt-text');
-        const typedTextSpan = promptText.querySelector('.typed-text');
-        const promptActions = document.getElementById('prompt-actions');
-        const putBackBtn = document.getElementById('put-back-btn');
-        const uploadBtn = document.getElementById('upload-btn');
-        const fileInput = document.getElementById('file-input');
-        
-        const notesModal = document.getElementById('notes-modal');
-        const sketchDateInput = document.getElementById('sketch-date');
-        const sketchNotesInput = document.getElementById('sketch-notes');
-        const saveLogBtn = document.getElementById('save-log-btn');
-
-        let currentPrompt = null;
-        let tempFile = null;
-
-        const GLITCH_DURATION = 1500;
-        const TYPING_SPEED = 50;
-
-        // RESTORED: The full typeWriter function that was missing.
-        function typeWriter(text, onComplete) {
-            let i = 0;
-            typedTextSpan.textContent = '';
-            promptText.classList.add('typing');
-            const intervalId = setInterval(() => {
-                if (i < text.length) {
-                    typedTextSpan.textContent += text.charAt(i); i++;
-                } else {
-                    clearInterval(intervalId);
-                    promptText.classList.remove('typing');
-                    if (onComplete) onComplete();
-                }
-            }, TYPING_SPEED);
-        }
-
-        // RESTORED: The full resetScreen function that was missing.
-        function resetScreen() {
-            promptText.setAttribute('data-text', 'Awaiting Input...');
-            typedTextSpan.textContent = 'Awaiting Input...';
-            promptText.classList.remove('typing');
-            promptActions.classList.add('hidden');
-            getPromptBtn.disabled = false;
-            currentPrompt = null;
-            tempFile = null;
-        }
-
-        // RESTORED: The full handleGetPrompt function that was missing.
-        function handleGetPrompt() {
-            getPromptBtn.disabled = true;
-            promptActions.classList.add('hidden');
-            typedTextSpan.textContent = "GENERATING...";
-            promptText.setAttribute('data-text', "GENERATING...");
-            promptText.classList.add('glitching');
-
-            // For simplicity, we just use the master list every time.
-            const MASTER_PROMPT_LIST = ["bookshelves inside a cathedral dome",
+const MASTER_PROMPT_LIST = ["bookshelves inside a cathedral dome",
             "an abandoned castle hallway",
             "the House of Leaves spiral staircase",
             "a lecture hall where all the desks face one empty chair",
@@ -188,17 +103,129 @@ document.addEventListener('DOMContentLoaded', () => {
             "a piano made of bones",
             "a scene from X-Files",
             "a scene from Eraserhead"];
-            
-            setTimeout(() => {
-                promptText.classList.remove('glitching');
-                const randomIndex = Math.floor(Math.random() * MASTER_PROMPT_LIST.length);
-                currentPrompt = MASTER_PROMPT_LIST[randomIndex];
-                typeWriter(currentPrompt, () => { 
-                    promptActions.classList.remove('hidden'); 
-                });
-            }, GLITCH_DURATION);
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+document.addEventListener('DOMContentLoaded', () => {
+    function showToast(message, isError = false) {
+        let container = document.getElementById('toast-container');
+        
+        // Create container if it doesn't exist yet
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
         }
 
+        const toast = document.createElement('div');
+        toast.className = `toast ${isError ? 'error' : ''}`;
+        toast.textContent = message;
+        
+        container.appendChild(toast);
+
+        // Fade out and remove after 2.5 seconds
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 400);
+        }, 2500);
+    }
+
+    const getPromptBtn = document.getElementById('get-prompt-btn');
+
+    if (getPromptBtn) {
+        // PROMPT PAGE LOGIC
+        const promptText = document.getElementById('prompt-text');
+        const typedTextSpan = promptText.querySelector('.typed-text');
+        const promptActions = document.getElementById('prompt-actions');
+        const putBackBtn = document.getElementById('put-back-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        
+        const notesModal = document.getElementById('notes-modal');
+        const sketchDateInput = document.getElementById('sketch-date');
+        const sketchNotesInput = document.getElementById('sketch-notes');
+        const saveLogBtn = document.getElementById('save-log-btn');
+
+        let currentPrompt = null;
+        let tempFile = null;
+
+        const GLITCH_DURATION = 1500;
+        const TYPING_SPEED = 50;
+
+        // RESTORED: The full typeWriter function that was missing.
+        function typeWriter(text, onComplete) {
+            let i = 0;
+            typedTextSpan.textContent = '';
+            promptText.classList.add('typing');
+            const intervalId = setInterval(() => {
+                if (i < text.length) {
+                    typedTextSpan.textContent += text.charAt(i); i++;
+                } else {
+                    clearInterval(intervalId);
+                    promptText.classList.remove('typing');
+                    if (onComplete) onComplete();
+                }
+            }, TYPING_SPEED);
+        }
+
+        // RESTORED: The full resetScreen function that was missing.
+        function resetScreen() {
+            promptText.setAttribute('data-text', 'Awaiting Input...');
+            typedTextSpan.textContent = 'Awaiting Input...';
+            promptText.classList.remove('typing');
+            promptActions.classList.add('hidden');
+            getPromptBtn.disabled = false;
+            currentPrompt = null;
+            tempFile = null;
+        }
+
+        // RESTORED: The full handleGetPrompt function that was missing.
+async function handleGetPrompt() {
+    getPromptBtn.disabled = true;
+    promptActions.classList.add('hidden');
+    typedTextSpan.textContent = "QUERYING ARCHIVES..."; // Updated flavor text
+    promptText.setAttribute('data-text', "QUERYING ARCHIVES...");
+    promptText.classList.add('glitching');
+
+    try {
+        // 1. Fetch all prompts that are ALREADY in the logbook
+        const { data: existingLogs, error } = await supabase
+            .from('sketches')
+            .select('prompt');
+
+        if (error) throw error;
+
+        // 2. Create a list of prompt strings we already have images for
+        const loggedPrompts = existingLogs.map(log => log.prompt);
+
+        // 3. Filter the MASTER_PROMPT_LIST to remove logged ones
+        const availablePrompts = MASTER_PROMPT_LIST.filter(p => !loggedPrompts.includes(p));
+
+        setTimeout(() => {
+            promptText.classList.remove('glitching');
+            
+            if (availablePrompts.length === 0) {
+                typeWriter("ALL DATA ARCHIVED. SYSTEM COMPLETE.", () => {
+                    getPromptBtn.disabled = false;
+                });
+                return;
+            }
+
+            // 4. Pick from the available (un-sketched) list
+            const randomIndex = Math.floor(Math.random() * availablePrompts.length);
+            currentPrompt = availablePrompts[randomIndex];
+            
+            typeWriter(currentPrompt, () => { 
+                promptActions.classList.remove('hidden'); 
+            });
+        }, GLITCH_DURATION);
+
+    } catch (err) {
+        console.error(err);
+        showToast("DATABASE CONNECTION ERROR", true);
+        resetScreen();
+    }
+}
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
@@ -261,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveLogBtn.disabled = false;
             saveLogBtn.textContent = 'Save to Logbook';
         });
-        
+
         getPromptBtn.addEventListener('click', handleGetPrompt);
         putBackBtn.addEventListener('click', resetScreen);
         uploadBtn.addEventListener('click', () => fileInput.click());
