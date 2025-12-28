@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://tpvbgmqzutnlcuxkateu.supabase.co'; 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdmJnbXF6dXRubGN1eGthdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NjAyNDcsImV4cCI6MjA4MjUzNjI0N30.9rOhszt9XxEXn2HCOEFPlPd_nnNxwAYXNzW9wwR8nyM';
@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // RESTORED: The full resetScreen function that was missing.
         function resetScreen() {
-            promptText.setAttribute('data-text', '[Awaiting Input...]');
-            typedTextSpan.textContent = '[Awaiting Input...]';
+            promptText.setAttribute('data-text', 'Awaiting Input...');
+            typedTextSpan.textContent = 'Awaiting Input...';
             promptText.classList.remove('typing');
             promptActions.classList.add('hidden');
             getPromptBtn.disabled = false;
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         async function handleRemoveItem(id, imagePath) {
-             if (!confirm('Are you sure you want to remove this log? This is permanent.')) return;
+             if (!confirm('Are you sure you want to remove this log?')) return;
 
              const { error: dbError } = await supabase
                 .from('sketches')

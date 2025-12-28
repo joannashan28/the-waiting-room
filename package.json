@@ -1,7 +1,6 @@
 {
   "name": "the-waiting-room",
   "version": "1.0.0",
-  "description": "Art prompt and logbook application",
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0"

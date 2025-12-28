@@ -28,17 +28,17 @@ export default async function handler(req) {
     const fileName = `${Date.now()}-${file.name}`;
     const fileBuffer = await file.arrayBuffer();
 
-    // 1. Upload to Storage
+    // 1. Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from('sketches')
       .upload(fileName, fileBuffer, { contentType: file.type });
 
     if (uploadError) throw uploadError;
 
-    // 2. Get URL
+    // 2. Get the URL
     const { data: urlData } = supabase.storage.from('sketches').getPublicUrl(fileName);
 
-    // 3. Save to DB
+    // 3. Insert into Database
     const { error: dbError } = await supabase
       .from('sketches')
       .insert({
