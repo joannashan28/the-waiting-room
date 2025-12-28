@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/joannashan28/the-waiting-room#readme",
   "dependencies": {
-    "@supabase/supabase-js": "^2.89.0"
+    "@supabase/supabase-js": "^2.0.0"
   }
 }

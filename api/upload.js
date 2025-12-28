@@ -1,74 +1,62 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client
-// These are Environment Variables that you will set on your hosting platform (Vercel)
-// They are NOT hardcoded for security reasons.
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Vercel Edge runtime allows us to use standard Request/Response
+export const config = {
+  runtime: 'edge',
+};
 
-export default async function handler(request, response) {
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+export default async function handler(request) {
     if (request.method !== 'POST') {
-        return response.status(405).json({ error: 'Method Not Allowed' });
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405 });
     }
 
     try {
-        // Vercel's helper to parse multipart/form-data
         const formData = await request.formData();
-        
         const file = formData.get('file');
         const prompt = formData.get('prompt');
         const date = formData.get('date');
         const notes = formData.get('notes');
 
         if (!file) {
-            return response.status(400).json({ error: 'No file provided.' });
+            return new Response(JSON.stringify({ error: 'No file provided.' }), { status: 400 });
         }
         
-        // Use a unique name for the file to prevent overwrites
         const fileName = `${Date.now()}-${file.name}`;
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const fileBuffer = await file.arrayBuffer();
 
-        // 1. Upload the image file to Supabase Storage
+        // 1. Upload to Supabase Storage
         const { error: uploadError } = await supabase.storage
-            .from('sketches') // The bucket name we created
+            .from('sketches')
             .upload(fileName, fileBuffer, {
                 contentType: file.type,
                 upsert: false,
             });
 
-        if (uploadError) {
-            throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
-        // 2. Get the public URL of the file we just uploaded
-        const { data: urlData } = supabase.storage
-            .from('sketches')
-            .getPublicUrl(fileName);
+        // 2. Get Public URL
+        const { data: urlData } = supabase.storage.from('sketches').getPublicUrl(fileName);
 
-        if (!urlData.publicUrl) {
-            throw new Error('Could not get public URL for the uploaded file.');
-        }
-
-        // 3. Insert the metadata (including the image URL) into the database
+        // 3. Insert Metadata
         const { error: dbError } = await supabase
-            .from('sketches') // The table name we created
+            .from('sketches')
             .insert({
                 prompt: prompt,
                 date: date,
                 notes: notes,
-                image_url: urlData.publicUrl, // Save the URL, not the image data
+                image_url: urlData.publicUrl,
             });
 
-        if (dbError) {
-            throw dbError;
-        }
+        if (dbError) throw dbError;
 
-        // 4. Send a success response back to the front-end
-        return response.status(200).json({ success: true });
+        return new Response(JSON.stringify({ success: true }), { 
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
 
     } catch (error) {
-        console.error('Error in upload handler:', error);
-        return response.status(500).json({ error: error.message });
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 }
