@@ -1,7 +1,7 @@
-import createClient from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-const SUPABASE_URL = 'https://your-project-id.supabase.co'; 
-const SUPABASE_ANON_KEY = 'your-anon-key';
+const SUPABASE_URL = 'https://tpvbgmqzutnlcuxkateu.supabase.co'; 
+const SUPABASE_ANON_KEY = 'sb_publishable_5j2yNn4lW3qW1AbKAEpNSQ_n4_hn_HI';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
