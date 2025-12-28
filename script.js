@@ -1,6 +1,243 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+// These are your PUBLIC keys. It's safe to have them in your front-end code.
+// Replace with your actual Supabase URL and anon key from Step 1.
+const SUPABASE_URL = 'https://tpvbgmqzutnlcuxkateu.supabase.co'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRwdmJnbXF6dXRubGN1eGthdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5NjAyNDcsImV4cCI6MjA4MjUzNjI0N30.9rOhszt9XxEXn2HCOEFPlPd_nnNxwAYXNzW9wwR8nyM';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 document.addEventListener('DOMContentLoaded', () => {
-    const MASTER_PROMPT_LIST = [
-        "bookshelves inside a cathedral dome",
+
+    if (document.getElementById('get-prompt-btn')) {
+        const getPromptBtn = document.getElementById('get-prompt-btn');
+        const promptText = document.getElementById('prompt-text');
+        const typedTextSpan = promptText.querySelector('.typed-text');
+        const promptActions = document.getElementById('prompt-actions');
+        const putBackBtn = document.getElementById('put-back-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        
+        const notesModal = document.getElementById('notes-modal');
+        const sketchDateInput = document.getElementById('sketch-date');
+        const sketchNotesInput = document.getElementById('sketch-notes');
+        const saveLogBtn = document.getElementById('save-log-btn');
+
+        let currentPrompt = null;
+        let tempFile = null;
+
+        const GLITCH_DURATION = 1500;
+        const TYPING_SPEED = 50;
+        function typeWriter(text, onComplete) {
+            let i = 0;
+            typedTextSpan.textContent = '';
+            promptText.classList.add('typing');
+            const intervalId = setInterval(() => {
+                if (i < text.length) {
+                    typedTextSpan.textContent += text.charAt(i); i++;
+                } else {
+                    clearInterval(intervalId);
+                    promptText.classList.remove('typing');
+                    if (onComplete) onComplete();
+                }
+            }, TYPING_SPEED);
+        }
+
+        function resetScreen() {
+            promptText.setAttribute('data-text', 'Awaiting Input...');
+            typedTextSpan.textContent = 'Awaiting Input...';
+            promptText.classList.remove('typing');
+            promptActions.classList.add('hidden');
+            getPromptBtn.disabled = false;
+            currentPrompt = null;
+            tempImageSrc = null;
+        }
+
+        function handleGetPrompt() {
+            if (availablePrompts.length === 0) {
+                alert("PROMPT CACHE EMPTY. REINITIALIZING...");
+                availablePrompts = [...MASTER_PROMPT_LIST];
+            }
+            getPromptBtn.disabled = true;
+            promptActions.classList.add('hidden');
+            
+            typedTextSpan.textContent = "GENERATING..."; 
+            promptText.setAttribute('data-text', "GENERATING...");
+            promptText.classList.add('glitching');
+
+            setTimeout(() => {
+                promptText.classList.remove('glitching');
+                const randomIndex = Math.floor(Math.random() * availablePrompts.length);
+                currentPrompt = availablePrompts.splice(randomIndex, 1)[0];
+                saveToStorage('sketchAvailablePrompts', availablePrompts);
+                
+                typeWriter(currentPrompt, () => {
+                    promptActions.classList.remove('hidden');
+                });
+            }, GLITCH_DURATION);
+        }
+
+        async function handleGetPrompt() {
+            getPromptBtn.disabled = true;
+            promptActions.classList.add('hidden');
+            typedTextSpan.textContent = "GENERATING...";
+            promptText.setAttribute('data-text', "GENERATING...");
+            promptText.classList.add('glitching');
+
+            const MASTER_PROMPT_LIST = [ "A rogue AI tending to a digital garden", "A cyborg cat chasing a laser pointer", "A data stream flowing like a river through a circuit board canyon", "An android serving oil to surprised robots at a futuristic bar", "A mech suit designed for knitting, not for combat", "A sentient hologram that's afraid of being unplugged", "A server farm that has grown into a metallic, glowing forest", "A drone delivering a single, handwritten love letter", "A human and a robot playing a game of chess on a neon grid", "A satellite that has achieved consciousness and is composing poetry"];
+            
+            setTimeout(() => {
+                promptText.classList.remove('glitching');
+                const randomIndex = Math.floor(Math.random() * MASTER_PROMPT_LIST.length);
+                currentPrompt = MASTER_PROMPT_LIST[randomIndex];
+                typeWriter(currentPrompt, () => { promptActions.classList.remove('hidden'); });
+            }, GLITCH_DURATION);
+        }
+
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file || !currentPrompt) return;
+            
+            tempFile = file;
+            
+            sketchDateInput.value = new Date().toISOString().split('T')[0];
+            sketchNotesInput.value = '';
+            notesModal.classList.remove('hidden');
+            fileInput.value = '';
+        }
+
+        async function handleSaveLog() {
+            if (!currentPrompt || !tempFile) return;
+
+            saveLogBtn.disabled = true;
+            saveLogBtn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', tempFile);
+            formData.append('prompt', currentPrompt);
+            formData.append('date', sketchDateInput.value);
+            formData.append('notes', sketchNotesInput.value);
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Upload failed.');
+                }
+                
+                alert('LOG SUCCESSFUL. DATA ARCHIVED.');
+                notesModal.classList.add('hidden');
+                resetScreen();
+
+            } catch (error) {
+                console.error('Error uploading sketch:', error);
+                alert(`Error: ${error.message}`);
+            } finally {
+                saveLogBtn.disabled = false;
+                saveLogBtn.textContent = 'Save to Gallery';
+            }
+        }
+
+        getPromptBtn.addEventListener('click', handleGetPrompt);
+        putBackBtn.addEventListener('click', resetScreen);
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        saveLogBtn.addEventListener('click', handleSaveLog);
+    }
+
+    // --- GALLERY PAGE LOGIC ---
+    if (document.getElementById('gallery-container')) {
+        const galleryContainer = document.getElementById('gallery-container');
+
+        async function renderGallery() {
+            galleryContainer.innerHTML = `<p class="empty-gallery-message">LOADING DATA LOGS...</p>`;
+
+            const { data: galleryItems, error } = await supabase
+                .from('sketches')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching gallery:', error);
+                galleryContainer.innerHTML = `<p class="empty-gallery-message">ERROR: COULD NOT LOAD GALLERY.</p>`;
+                return;
+            }
+
+            if (galleryItems.length === 0) {
+                galleryContainer.innerHTML = `<p class="empty-gallery-message">NO DATA LOGS FOUND. INITIATE A PROMPT TO BEGIN.</p>`;
+                return;
+            }
+
+            galleryContainer.innerHTML = '';
+            galleryItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'gallery-card';
+                card.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">
+                            <img src="${item.image_url}" alt="Sketch for ${item.prompt}">
+                        </div>
+                        <div class="card-back">
+                            <h3>${item.prompt}</h3>
+                            <p class="date">Logged: ${item.date || 'N/A'}</p>
+                            <p class="notes">${item.notes || 'No notes available.'}</p>
+                            <button class="remove-btn" data-id="${item.id}" data-image-path="${item.image_url.split('/').pop()}">Remove Log</button>
+                        </div>
+                    </div>
+                `;
+                galleryContainer.appendChild(card);
+            });
+        }
+        
+        async function handleRemoveItem(id, imagePath) {
+             if (!confirm('Are you sure you want to remove this log? This is permanent.')) return;
+
+             const { error: dbError } = await supabase
+                .from('sketches')
+                .delete()
+                .eq('id', id);
+
+            if (dbError) {
+                alert('Error deleting log from database.');
+                return;
+            }
+
+             const { error: storageError } = await supabase
+                .storage
+                .from('sketches')
+                .remove([imagePath]);
+            
+            if (storageError) {
+                alert('Warning: Log deleted from database, but could not remove image file from storage.');
+            }
+
+            renderGallery();
+        }
+
+        galleryContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                const id = e.target.dataset.id;
+                const imagePath = e.target.dataset.imagePath;
+                handleRemoveItem(id, imagePath);
+            } else {
+                const card = e.target.closest('.gallery-card');
+                if (card) {
+                    card.classList.toggle('flipped');
+                }
+            }
+        });
+
+        renderGallery();
+    }
+});
+
+
+"bookshelves inside a cathedral dome",
         "an abandoned castle hallway",
         "the House of Leaves spiral staircase",
         "a lecture hall where all the desks face one empty chair",
@@ -101,157 +338,3 @@ document.addEventListener('DOMContentLoaded', () => {
         "a piano made of bones",
         "a scene from X-Files",
         "a scene from Eraserhead"
-    ];
-
-    function getFromStorage(key, defaultValue) { const saved = localStorage.getItem(key); return saved ? JSON.parse(saved) : defaultValue; }
-    function saveToStorage(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-    if (!localStorage.getItem('sketchAvailablePrompts')) { saveToStorage('sketchAvailablePrompts', MASTER_PROMPT_LIST); }
-
-    // --- PROMPT PAGE LOGIC ---
-    if (document.getElementById('get-prompt-btn')) {
-        const getPromptBtn = document.getElementById('get-prompt-btn');
-        const promptText = document.getElementById('prompt-text');
-        const typedTextSpan = promptText.querySelector('.typed-text');
-        const promptActions = document.getElementById('prompt-actions');
-        const putBackBtn = document.getElementById('put-back-btn');
-        const uploadBtn = document.getElementById('upload-btn');
-        const fileInput = document.getElementById('file-input');
-        const notesModal = document.getElementById('notes-modal');
-        const sketchDateInput = document.getElementById('sketch-date');
-        const sketchNotesInput = document.getElementById('sketch-notes');
-        const saveLogBtn = document.getElementById('save-log-btn');
-
-        let availablePrompts = getFromStorage('sketchAvailablePrompts', [...MASTER_PROMPT_LIST]);
-        let currentPrompt = null;
-        let tempImageSrc = null;
-
-        const GLITCH_DURATION = 1500;
-        const TYPING_SPEED = 50;
-
-        function typeWriter(text, onComplete) {
-            let i = 0;
-            typedTextSpan.textContent = '';
-            promptText.classList.add('typing');
-            const intervalId = setInterval(() => {
-                if (i < text.length) {
-                    typedTextSpan.textContent += text.charAt(i); i++;
-                } else {
-                    clearInterval(intervalId);
-                    promptText.classList.remove('typing');
-                    if (onComplete) onComplete();
-                }
-            }, TYPING_SPEED);
-        }
-
-        function resetScreen() {
-            promptText.setAttribute('data-text', 'Awaiting Input...');
-            typedTextSpan.textContent = 'Awaiting Input...';
-            promptText.classList.remove('typing');
-            promptActions.classList.add('hidden');
-            getPromptBtn.disabled = false;
-            currentPrompt = null;
-            tempImageSrc = null;
-        }
-
-        function handleGetPrompt() {
-            if (availablePrompts.length === 0) {
-                alert("PROMPT CACHE EMPTY. REINITIALIZING...");
-                availablePrompts = [...MASTER_PROMPT_LIST];
-            }
-            getPromptBtn.disabled = true;
-            promptActions.classList.add('hidden');
-            
-            // --- THE FIX IS HERE ---
-            // 1. Set the SPAN's text to "GENERATING..."
-            typedTextSpan.textContent = "GENERATING..."; 
-            // 2. Set the PARENT'S data-text attribute for the glitch effect
-            promptText.setAttribute('data-text', "GENERATING...");
-            // 3. Add the glitch class to the PARENT
-            promptText.classList.add('glitching');
-
-            setTimeout(() => {
-                promptText.classList.remove('glitching');
-                const randomIndex = Math.floor(Math.random() * availablePrompts.length);
-                currentPrompt = availablePrompts.splice(randomIndex, 1)[0];
-                saveToStorage('sketchAvailablePrompts', availablePrompts);
-                
-                // Now call the typewriter, which will clear the span and type the new prompt
-                typeWriter(currentPrompt, () => {
-                    promptActions.classList.remove('hidden');
-                });
-            }, GLITCH_DURATION);
-        }
-
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file || !currentPrompt) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                tempImageSrc = e.target.result;
-                sketchDateInput.value = new Date().toISOString().split('T')[0];
-                sketchNotesInput.value = '';
-                notesModal.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-            fileInput.value = '';
-        }
-
-        function handleSaveLog() {
-            if (!currentPrompt || !tempImageSrc) return;
-            const newItem = { id: Date.now(), prompt: currentPrompt, imageSrc: tempImageSrc, date: sketchDateInput.value, notes: sketchNotesInput.value };
-            let galleryItems = getFromStorage('sketchGallery', []);
-            galleryItems.unshift(newItem);
-            saveToStorage('sketchGallery', galleryItems);
-            alert('LOG SUCCESSFUL. DATA ARCHIVED.');
-            notesModal.classList.add('hidden');
-            resetScreen();
-        }
-
-        getPromptBtn.addEventListener('click', handleGetPrompt);
-        putBackBtn.addEventListener('click', () => { if (currentPrompt) { availablePrompts.push(currentPrompt); saveToStorage('sketchAvailablePrompts', availablePrompts); } resetScreen(); });
-        uploadBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFileSelect);
-        saveLogBtn.addEventListener('click', handleSaveLog);
-        notesModal.addEventListener('click', (e) => { if (e.target === notesModal) notesModal.classList.add('hidden'); });
-    }
-
-    // --- GALLERY PAGE LOGIC (Unchanged) ---
-    if (document.getElementById('gallery-container')) {
-        const galleryContainer = document.getElementById('gallery-container');
-        function renderGallery() {
-            const galleryItems = getFromStorage('sketchGallery', []);
-            galleryContainer.innerHTML = '';
-            if (galleryItems.length === 0) { galleryContainer.innerHTML = `<p class="empty-gallery-message">NO DATA LOGS FOUND. INITIATE A PROMPT TO BEGIN.</p>`; return; }
-            galleryItems.forEach(item => {
-                const card = document.createElement('div');
-                card.className = 'gallery-card';
-                card.innerHTML = `<div class="card-inner"><div class="card-front"><img src="${item.imageSrc}" alt="Sketch for ${item.prompt}"></div><div class="card-back"><h3>${item.prompt}</h3><p class="date">Logged: ${item.date || 'N/A'}</p><p class="notes">${item.notes || 'No notes available.'}</p><button class="remove-btn" data-id="${item.id}">Remove Log</button></div></div>`;
-                galleryContainer.appendChild(card);
-            });
-        }
-        function handleRemoveItem(id) {
-             if (!confirm('Are you sure you want to remove this log? This will return the prompt to the mix.')) return;
-             let galleryItems = getFromStorage('sketchGallery', []);
-             let availablePrompts = getFromStorage('sketchAvailablePrompts', []);
-             const itemToRemove = galleryItems.find(item => item.id == id);
-             if (itemToRemove) {
-                 availablePrompts.push(itemToRemove.prompt);
-                 const updatedGallery = galleryItems.filter(item => item.id != id);
-                 saveToStorage('sketchAvailablePrompts', availablePrompts);
-                 saveToStorage('sketchGallery', updatedGallery);
-                 renderGallery();
-             }
-        }
-        galleryContainer.addEventListener('click', (e) => {
-            const card = e.target.closest('.gallery-card');
-            if (!card) return;
-            if (e.target.classList.contains('remove-btn')) {
-                const id = e.target.dataset.id;
-                handleRemoveItem(id);
-            } else {
-                card.classList.toggle('flipped');
-            }
-        });
-        renderGallery();
-    }
-});
