@@ -183,8 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleGetPrompt() {
     getPromptBtn.disabled = true;
     promptActions.classList.add('hidden');
-    typedTextSpan.textContent = "QUERYING ARCHIVES..."; // Updated flavor text
-    promptText.setAttribute('data-text', "QUERYING ARCHIVES...");
+    typedTextSpan.textContent = "INITIATING..."; // Updated flavor text
+    promptText.setAttribute('data-text', "INITIATING...");
     promptText.classList.add('glitching');
 
     try {
